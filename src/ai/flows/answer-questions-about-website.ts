@@ -10,7 +10,8 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import { JSDOM } from 'jsdom';
+import {JSDOM} from 'jsdom';
+import {generateImage} from './generate-image';
 
 const AnswerQuestionsAboutWebsiteInputSchema = z.object({
   websiteUrl: z.string().describe('The URL of the website to answer questions about.'),
@@ -21,6 +22,7 @@ export type AnswerQuestionsAboutWebsiteInput = z.infer<typeof AnswerQuestionsAbo
 
 const AnswerQuestionsAboutWebsiteOutputSchema = z.object({
   answer: z.string().describe('The answer to the question about the website.'),
+  imageUrl: z.string().optional().describe('An image URL relevant to the answer, if requested.'),
 });
 export type AnswerQuestionsAboutWebsiteOutput = z.infer<typeof AnswerQuestionsAboutWebsiteOutputSchema>;
 
@@ -29,8 +31,9 @@ async function extractTextFromWebsite(url: string): Promise<string> {
   try {
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      },
     });
 
     if (!response.ok) {
@@ -41,7 +44,7 @@ async function extractTextFromWebsite(url: string): Promise<string> {
     const dom = new JSDOM(html);
     const document = dom.window.document;
     // Remove script and style elements to avoid including irrelevant code in the prompt
-    document.querySelectorAll('script, style, nav, footer, aside').forEach((el) => el.remove());
+    document.querySelectorAll('script, style, nav, footer, aside').forEach(el => el.remove());
     const textContent = document.body ? document.body.textContent || '' : '';
     // Condense whitespace
     return textContent.replace(/\s\s+/g, ' ').trim();
@@ -51,16 +54,38 @@ async function extractTextFromWebsite(url: string): Promise<string> {
   }
 }
 
-export async function answerQuestionsAboutWebsite(input: AnswerQuestionsAboutWebsiteInput): Promise<AnswerQuestionsAboutWebsiteOutput> {
+export async function answerQuestionsAboutWebsite(
+  input: AnswerQuestionsAboutWebsiteInput
+): Promise<AnswerQuestionsAboutWebsiteOutput> {
   return answerQuestionsAboutWebsiteFlow(input);
 }
 
+const generateImageTool = ai.defineTool(
+  {
+    name: 'generateImage',
+    description: 'Generates an image based on a text description.',
+    inputSchema: z.object({
+      prompt: z.string().describe('A detailed text description of the image to generate.'),
+    }),
+    outputSchema: z.object({
+      imageUrl: z.string(),
+    }),
+  },
+  async input => {
+    const {imageUrl} = await generateImage({prompt: input.prompt});
+    return {imageUrl};
+  }
+);
+
 const prompt = ai.definePrompt({
   name: 'answerQuestionsAboutWebsitePrompt',
-  input: {schema: z.object({
-    ...AnswerQuestionsAboutWebsiteInputSchema.shape,
-    websiteContent: z.string().describe('The text content of the website.'),
-  })},
+  tools: [generateImageTool],
+  input: {
+    schema: z.object({
+      ...AnswerQuestionsAboutWebsiteInputSchema.shape,
+      websiteContent: z.string().describe('The text content of the website.'),
+    }),
+  },
   output: {schema: AnswerQuestionsAboutWebsiteOutputSchema},
   prompt: `You are a helpful chat agent. Your primary goal is to answer questions based on the content of a website.
 
@@ -72,6 +97,8 @@ Here is the content of the website:
 First, try to answer the question using the provided website content.
 
 If the website content starts with "Error:", it means you were unable to access the website's content. This might be because the site has security measures that block automated access. In this situation, you MUST inform the user that you couldn't access the site, but then you MUST try to answer their question using your own general knowledge. For example, if they ask for product specifications, provide them from your knowledge base. Do not make up an excuse like "the site is overloaded". Be direct about the failure but still try to be helpful.
+
+If the user's question asks for an image, a picture, or to be shown something, you MUST use the generateImage tool to generate an image. Provide a text answer that complements the image.
 
 Use the following chat history to maintain context within the session:
 {{#if chatHistory}}
@@ -93,10 +120,32 @@ const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
   async input => {
     const websiteContent = await extractTextFromWebsite(input.websiteUrl);
 
-    const {output} = await prompt({
+    const llmResponse = await prompt({
       ...input,
       websiteContent,
     });
-    return output!;
+
+    if (llmResponse.output) {
+      return llmResponse.output;
+    }
+
+    // Handle tool calls
+    let imageUrl: string | undefined;
+    for (const toolRequest of llmResponse.toolRequests) {
+      if (toolRequest.name === 'generateImage') {
+        const toolResponse = await toolRequest.run();
+        if (toolResponse) {
+          imageUrl = (toolResponse as {imageUrl: string}).imageUrl;
+        }
+      }
+    }
+
+    // Get the final text response from the model
+    const finalLlmResponse = await llmResponse.next();
+
+    return {
+      answer: finalLlmResponse.output?.answer || 'Sorry, I could not generate a response.',
+      imageUrl: imageUrl || finalLlmResponse.output?.imageUrl,
+    };
   }
 );

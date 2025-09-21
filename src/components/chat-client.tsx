@@ -1,20 +1,20 @@
 'use client';
 
-import { useState, useEffect, useId } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import type { Message } from '@/lib/types';
-import { getAgentResponse, getSummary } from '@/lib/actions';
+import {useState, useEffect, useId} from 'react';
+import {useSearchParams, useRouter} from 'next/navigation';
+import type {Message} from '@/lib/types';
+import {getAgentResponse, getSummary} from '@/lib/actions';
 import ChatLayout from '@/components/chat-layout';
-import { useToast } from '@/hooks/use-toast';
-import { LoaderCircle } from 'lucide-react';
-import { useAuth } from '@/context/auth-context';
+import {useToast} from '@/hooks/use-toast';
+import {LoaderCircle} from 'lucide-react';
+import {useAuth} from '@/context/auth-context';
 
 export default function ChatClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
-  
+  const {toast} = useToast();
+  const {isAuthenticated} = useAuth();
+
   const [url, setUrl] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
@@ -67,24 +67,24 @@ export default function ChatClient() {
       const newAgentMessage: Message = {
         id: crypto.randomUUID(),
         role: 'agent',
-        content: response,
+        content: response.answer,
+        imageUrl: response.imageUrl,
       };
-      
-      setMessages((prevMessages) => [...prevMessages, newAgentMessage]);
 
+      setMessages(prevMessages => [...prevMessages, newAgentMessage]);
     } catch (error) {
       toast({
         title: 'Error',
         description: 'Failed to get a response from the agent.',
         variant: 'destructive',
       });
-       // Restore previous messages if API fails
+      // Restore previous messages if API fails
       setMessages(messages);
     } finally {
       setIsSending(false);
     }
   };
-  
+
   const handleSummarize = async () => {
     if (isSending || !url) return;
 
@@ -96,9 +96,8 @@ export default function ChatClient() {
         role: 'agent',
         content: response,
       };
-      
-      setMessages((prevMessages) => [...prevMessages, newAgentMessage]);
 
+      setMessages(prevMessages => [...prevMessages, newAgentMessage]);
     } catch (error) {
       toast({
         title: 'Error',
@@ -109,7 +108,6 @@ export default function ChatClient() {
       setIsSending(false);
     }
   };
-
 
   if (isLoading || !url) {
     return (
