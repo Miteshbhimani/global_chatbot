@@ -1,16 +1,14 @@
 
 'use client';
 
-import { useState, useEffect, useId, useCallback } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import type { Message, ChatSession } from '@/lib/types';
+import type { Message } from '@/lib/types';
 import { getAgentResponse } from '@/lib/actions';
 import ChatLayout from '@/components/chat-layout';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import { getChatSession, saveChatSession } from '@/lib/history';
-
 
 export default function ChatClient() {
   const searchParams = useSearchParams();
@@ -18,10 +16,10 @@ export default function ChatClient() {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   
-  const [session, setSession] = useState<ChatSession | null>(null);
+  const [url, setUrl] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const componentId = useId();
 
   useEffect(() => {
@@ -31,76 +29,28 @@ export default function ChatClient() {
     }
 
     if (isAuthenticated === true) {
-      const sessionId = searchParams.get('sessionId');
       const urlParam = searchParams.get('url');
 
-      if (sessionId) {
-        const existingSession = getChatSession(sessionId);
-        if (existingSession) {
-          setSession(existingSession);
-          setMessages(existingSession.messages);
-        } else {
-           // This was causing the issue. Redirect without a toast.
-           router.push('/start');
-           return; // Prevent further execution
-        }
-      } else if (urlParam) {
+      if (urlParam) {
         const decodedUrl = decodeURIComponent(urlParam);
-        const newSessionId = crypto.randomUUID();
-        const newSession: ChatSession = {
-          id: newSessionId,
-          url: decodedUrl,
-          title: `Conversation about ${decodedUrl}`,
-          messages: [{
+        setUrl(decodedUrl);
+        setMessages([
+          {
             id: `${componentId}-initial-message`,
             role: 'agent',
             content: `Hello! I'm your AI agent for ${decodedUrl}. How can I help you explore this site?`,
-          }],
-          createdAt: new Date().toISOString(),
-        };
-        setSession(newSession);
-        setMessages(newSession.messages);
-        // Navigate to the new session's URL and then stop execution.
-        router.replace(`/chat?sessionId=${newSessionId}`);
-        return; 
+          },
+        ]);
+        setIsLoading(false);
       } else {
+        // If no URL is provided, redirect to the start page.
         router.push('/start');
-        return; // Prevent further execution
-      }
-
-      setIsAuthenticating(false);
-    }
-  }, [searchParams, router, isAuthenticated, componentId, toast]);
-
-  const updateSession = useCallback((newMessages: Message[]) => {
-    if (!session) return;
-    
-    // Find if any message in the session is from the user.
-    const hasUserMessage = session.messages.some(m => m.role === 'user');
-    let newTitle = session.title;
-  
-    // Only update the title if a user message has NOT been sent before in this session.
-    if (!hasUserMessage) {
-      const firstUserMessage = newMessages.find(m => m.role === 'user');
-      if (firstUserMessage) {
-        const potentialTitle = firstUserMessage.content.substring(0, 40);
-        newTitle = potentialTitle.length === 40 ? `${potentialTitle}...` : potentialTitle;
       }
     }
-    
-    const updatedSession = { 
-      ...session, 
-      messages: newMessages,
-      title: newTitle,
-    };
-    
-    setSession(updatedSession);
-    saveChatSession(updatedSession);
-  }, [session]);
-
+  }, [searchParams, router, isAuthenticated, componentId]);
 
   const handleSendMessage = async (content: string) => {
-    if (isSending || !content.trim() || !session) return;
+    if (isSending || !content.trim() || !url) return;
 
     const newUserMessage: Message = {
       id: crypto.randomUUID(),
@@ -110,20 +60,18 @@ export default function ChatClient() {
 
     const updatedMessages = [...messages, newUserMessage];
     setMessages(updatedMessages);
-    updateSession(updatedMessages); // Save user message immediately
     setIsSending(true);
 
     try {
-      const response = await getAgentResponse(session.url, content, updatedMessages);
+      // Pass the full message history, including the new user message
+      const response = await getAgentResponse(url, content, updatedMessages);
       const newAgentMessage: Message = {
         id: crypto.randomUUID(),
         role: 'agent',
         content: response,
       };
       
-      const finalMessages = [...updatedMessages, newAgentMessage];
-      setMessages(finalMessages);
-      updateSession(finalMessages);
+      setMessages((prevMessages) => [...prevMessages, newAgentMessage]);
 
     } catch (error) {
       toast({
@@ -138,7 +86,7 @@ export default function ChatClient() {
     }
   };
 
-  if (isAuthenticating || !session) {
+  if (isLoading || !url) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -147,7 +95,6 @@ export default function ChatClient() {
   }
 
   return (
-    <ChatLayout url={session.url} messages={messages} onSendMessage={handleSendMessage} isSending={isSending} />
+    <ChatLayout url={url} messages={messages} onSendMessage={handleSendMessage} isSending={isSending} />
   );
 }
-

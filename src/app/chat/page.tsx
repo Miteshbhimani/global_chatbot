@@ -3,15 +3,12 @@
 import { Suspense } from 'react';
 import { LoaderCircle } from 'lucide-react';
 import ChatClient from '@/components/chat-client';
-import MainLayout from '@/components/main-layout';
 
 export default function ChatPage() {
   return (
-    <MainLayout>
-      <Suspense fallback={<ChatSkeleton />}>
-        <ChatClient />
-      </Suspense>
-    </MainLayout>
+    <Suspense fallback={<ChatSkeleton />}>
+      <ChatClient />
+    </Suspense>
   );
 }
 
