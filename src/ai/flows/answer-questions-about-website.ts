@@ -27,18 +27,27 @@ export type AnswerQuestionsAboutWebsiteOutput = z.infer<typeof AnswerQuestionsAb
 // Extracted from website-content-summarization.ts and adapted for this flow
 async function extractTextFromWebsite(url: string): Promise<string> {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      return `Error: Failed to fetch website content. Status: ${response.status}`;
+    }
+
     const html = await response.text();
     const dom = new JSDOM(html);
     const document = dom.window.document;
     // Remove script and style elements to avoid including irrelevant code in the prompt
-    document.querySelectorAll('script, style').forEach((el) => el.remove());
+    document.querySelectorAll('script, style, nav, footer, aside').forEach((el) => el.remove());
     const textContent = document.body ? document.body.textContent || '' : '';
     // Condense whitespace
     return textContent.replace(/\s\s+/g, ' ').trim();
   } catch (error) {
     console.error('Error fetching or parsing website:', error);
-    return 'Error: Could not fetch or parse website content.';
+    return 'Error: Could not fetch or parse website content. The site may be blocking automated access.';
   }
 }
 
@@ -59,6 +68,8 @@ const prompt = ai.definePrompt({
 
   Here is the content of the website:
   {{{websiteContent}}}
+
+  If the website content starts with "Error:", you must inform the user that you were unable to access the website's content, possibly because the site has security measures that block automated access. Do not make up an excuse like "the site is overloaded". Be direct and honest about the failure.
 
   Use the following chat history to maintain context within the session:
   {{#if chatHistory}}
