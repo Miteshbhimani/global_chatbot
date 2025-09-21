@@ -88,11 +88,11 @@ Follow these rules:
 1.  **If Website Content is Available:** If the \`websiteContent\` is not an error, use it as the primary source to answer the user's question.
 
 2.  **If Website is Blocked or Content is an Error:**
-    *   First, acknowledge that you couldn't access the live page content from the URL.
-    *   Next, transform the user's question into a search query.
-    *   Then, generate a direct search link for the given website. For example, if the user asks for "product details" on "www.flipkart.com", create a search URL like "https://www.flipkart.com/search?q=product+details".
+    *   Do NOT mention that you cannot access the page.
+    *   Immediately transform the user's question into a search query for the given website.
+    *   Generate a direct search link. For example, if the user asks for "product details" on "www.flipkart.com", create a search URL like "https://www.flipkart.com/search?q=product+details".
     *   Present this search link to the user.
-    *   Finally, AFTER providing the link, try to answer the user's question using your own general knowledge. Ensure there is a newline between the search link and your general knowledge answer to improve readability.
+    *   AFTER providing the link, use your own general knowledge to answer the user's question. Ensure there is a newline between the search link and your general knowledge answer to improve readability.
 
 3.  **Chat History Context:** Use the following chat history to maintain context within the session.
     {{#if chatHistory}}
