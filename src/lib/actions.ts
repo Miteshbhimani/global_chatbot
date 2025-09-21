@@ -9,6 +9,8 @@ export async function getAgentResponse(
   chatHistory: Message[]
 ): Promise<string> {
   try {
+    // The chatHistory already includes the latest user message.
+    // The 'question' parameter is the content of that latest message.
     const historyString = chatHistory
       .map((msg) => `${msg.role === 'user' ? 'User' : 'Agent'}: ${msg.content}`)
       .join('\n');
