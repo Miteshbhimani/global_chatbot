@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -125,27 +126,14 @@ const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
       websiteContent,
     });
 
-    if (llmResponse.output) {
-      return llmResponse.output;
-    }
-
-    // Handle tool calls
-    let imageUrl: string | undefined;
-    for (const toolRequest of llmResponse.toolRequests) {
-      if (toolRequest.name === 'generateImage') {
-        const toolResponse = await toolRequest.run();
-        if (toolResponse) {
-          imageUrl = (toolResponse as {imageUrl: string}).imageUrl;
-        }
+    if (!llmResponse.isDone()) {
+      const toolResponse = await llmResponse.next();
+      if (!toolResponse.isDone()) {
+        const finalResponse = await toolResponse.next();
+        return finalResponse.output()!;
       }
+      return toolResponse.output()!;
     }
-
-    // Get the final text response from the model
-    const finalLlmResponse = await llmResponse.next();
-
-    return {
-      answer: finalLlmResponse.output?.answer || 'Sorry, I could not generate a response.',
-      imageUrl: imageUrl || finalLlmResponse.output?.imageUrl,
-    };
+    return llmResponse.output()!;
   }
 );
