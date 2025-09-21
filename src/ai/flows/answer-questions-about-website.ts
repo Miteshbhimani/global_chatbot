@@ -104,6 +104,6 @@ const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
       websiteContent,
     });
     
-    return llmResponse.output ?? { answer: "No response from AI." };
+    return llmResponse.output ?? { answer: "I apologize, but I encountered an unexpected error and cannot provide a response at this time." };
   }
 );
