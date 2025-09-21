@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, Globe, MessageSquare, Zap } from 'lucide-react';
+import { Globe, MessageSquare, Zap } from 'lucide-react';
 
 export default function Home() {
   return (
@@ -12,9 +12,15 @@ export default function Home() {
             <Globe className="h-6 w-6 text-primary" />
             <span>WebChat Navigator</span>
           </Link>
-          <nav className="ml-auto flex items-center gap-2">
+          <nav className="ml-auto flex items-center gap-4">
             <Button variant="ghost" asChild>
-              <Link href="/login">Login</Link>
+              <Link href="/">Home</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/about">About Us</Link>
+            </Button>
+            <Button variant="ghost" asChild>
+              <Link href="/contact">Contact Us</Link>
             </Button>
             <Button asChild>
               <Link href="/login">Get Started</Link>
@@ -107,6 +113,14 @@ export default function Home() {
         <p className="text-xs text-muted-foreground">
           &copy; {new Date().getFullYear()} WebChat Navigator. All rights reserved.
         </p>
+        <nav className="flex gap-4 sm:ml-auto sm:gap-6">
+          <Link href="/about" className="text-xs hover:underline">
+            About Us
+          </Link>
+          <Link href="/contact" className="text-xs hover:underline">
+            Contact Us
+          </Link>
+        </nav>
       </footer>
     </div>
   );
