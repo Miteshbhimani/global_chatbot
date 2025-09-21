@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Globe, LogOut } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function RootClientLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, logout } = useAuth();
@@ -24,7 +25,8 @@ export default function RootClientLayout({ children }: { children: React.ReactNo
             <Globe className="h-6 w-6 text-primary" />
             <span>WebChat Navigator</span>
           </Link>
-          <nav className="ml-auto flex items-center gap-4">
+          <nav className="ml-auto flex items-center gap-2">
+            <ThemeToggle />
             {isAuthenticated ? (
                <Button variant="ghost" size="icon" onClick={handleLogout} aria-label="Logout">
                 <LogOut className="h-5 w-5" />
