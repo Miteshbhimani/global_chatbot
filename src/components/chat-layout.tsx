@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import ChatInput from '@/components/chat-input';
 import ChatMessages from '@/components/chat-messages';
 import type { Message } from '@/lib/types';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 
 interface ChatLayoutProps {
   url: string;
@@ -16,11 +17,7 @@ export default function ChatLayout({ url, messages, onSendMessage, isSending }: 
   return (
     <div className="flex h-screen w-full flex-col bg-background">
       <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">
-        <Link href="/start" aria-label="Back to start">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </Link>
+        <SidebarTrigger className="md:hidden" />
         <div className="flex-1 truncate">
           <p className="truncate text-sm font-medium text-foreground">{url}</p>
           <p className="text-xs text-accent">Online</p>
