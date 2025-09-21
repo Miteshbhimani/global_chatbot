@@ -61,7 +61,7 @@ export default function UrlInputForm() {
         className="h-12 flex-grow bg-background text-base"
         disabled={isLoading}
       />
-      <Button type="submit" size="icon" className="h-12 w-12 shrink-0" disabled={isLoading}>
+      <Button type="submit" size="icon" className="h-12 w-12 shrink-0" disabled={isLoading || !url.trim()}>
         {isLoading ? <LoaderCircle className="animate-spin" /> : <ArrowRight />}
         <span className="sr-only">Start Chat</span>
       </Button>

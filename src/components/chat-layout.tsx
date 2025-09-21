@@ -16,7 +16,7 @@ export default function ChatLayout({ url, messages, onSendMessage, isSending }: 
   return (
     <div className="flex h-screen w-full flex-col bg-background">
       <header className="flex h-16 shrink-0 items-center gap-4 border-b bg-card px-4 md:px-6">
-        <Link href="/" aria-label="Back to home">
+        <Link href="/start" aria-label="Back to start">
           <Button variant="ghost" size="icon">
             <ArrowLeft className="h-5 w-5" />
           </Button>

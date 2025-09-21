@@ -1,28 +1,113 @@
-import { Globe } from 'lucide-react';
-import UrlInputForm from '@/components/url-input-form';
-import { Card } from '@/components/ui/card';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, Globe, MessageSquare, Zap } from 'lucide-react';
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
-      <div className="relative flex w-full max-w-2xl flex-col items-center gap-8">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="rounded-full bg-primary/10 p-3">
-            <div className="rounded-full bg-primary/20 p-4">
-              <Globe className="h-12 w-12 text-primary" />
+    <div className="flex min-h-screen flex-col bg-background">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 items-center">
+          <Link href="/" className="flex items-center gap-2 font-bold">
+            <Globe className="h-6 w-6 text-primary" />
+            <span>WebChat Navigator</span>
+          </Link>
+          <nav className="ml-auto flex items-center gap-2">
+            <Button variant="ghost" asChild>
+              <Link href="/login">Login</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/login">Get Started</Link>
+            </Button>
+          </nav>
+        </div>
+      </header>
+
+      <main className="flex-1">
+        <section className="w-full py-20 md:py-32 lg:py-40">
+          <div className="container px-4 text-center md:px-6">
+            <div className="mx-auto max-w-3xl space-y-4">
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
+                Chat with Any Website, Instantly
+              </h1>
+              <p className="text-lg text-muted-foreground md:text-xl">
+                WebChat Navigator lets you start a conversation with an AI agent that has full knowledge of any website. Just enter a URL and start asking questions.
+              </p>
+              <div>
+                <Button size="lg" asChild>
+                  <Link href="/login">Start Your First Chat</Link>
+                </Button>
+              </div>
             </div>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl md:text-6xl">
-            WebChat Navigator
-          </h1>
-          <p className="max-w-xl text-lg text-muted-foreground md:text-xl">
-            Enter any website URL to start a conversation with an AI agent that knows all about it.
-          </p>
-        </div>
-        <Card className="w-full p-2 shadow-lg">
-          <UrlInputForm />
-        </Card>
-      </div>
-    </main>
+        </section>
+
+        <section id="features" className="w-full bg-muted py-20 md:py-32">
+          <div className="container px-4 md:px-6">
+            <div className="mx-auto grid max-w-5xl items-center gap-8 lg:grid-cols-2 lg:gap-16">
+              <div className="space-y-4">
+                <div className="inline-block rounded-lg bg-primary/10 px-3 py-1 text-sm text-primary">
+                  Key Features
+                </div>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
+                  Why You'll Love WebChat Navigator
+                </h2>
+                <p className="text-muted-foreground md:text-lg">
+                  Unlock information faster and more intuitively than ever before.
+                </p>
+              </div>
+              <div className="grid gap-6">
+                <Card>
+                  <CardHeader className="flex flex-row items-center gap-4">
+                    <div className="rounded-full bg-primary/10 p-3">
+                      <Zap className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle>Instant Knowledge</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>No more endless searching. Our AI reads the entire website in seconds to provide you with accurate answers.</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center gap-4">
+                    <div className="rounded-full bg-primary/10 p-3">
+                      <MessageSquare className="h-6 w-6 text-primary" />
+                    </div>
+                    <CardTitle>Conversational Interface</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p>Just chat with the AI. Ask follow-up questions and get clarifications in a natural, conversational flow.</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="w-full py-20 md:py-32">
+          <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
+            <div className="space-y-3">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
+                Ready to Get Started?
+              </h2>
+              <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl">
+                Enter any website URL and begin your intelligent conversation today. It's that simple.
+              </p>
+            </div>
+            <div className="mx-auto w-full max-w-sm space-y-2">
+               <Button size="lg" asChild className="w-full">
+                  <Link href="/login">Launch WebChat Navigator</Link>
+                </Button>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="flex w-full shrink-0 flex-col items-center justify-center gap-2 border-t px-4 py-6 sm:flex-row md:px-6">
+        <p className="text-xs text-muted-foreground">
+          &copy; {new Date().getFullYear()} WebChat Navigator. All rights reserved.
+        </p>
+      </footer>
+    </div>
   );
 }

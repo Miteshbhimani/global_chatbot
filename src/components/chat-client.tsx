@@ -1,26 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { Message } from '@/lib/types';
 import { getAgentResponse } from '@/lib/actions';
 import ChatLayout from '@/components/chat-layout';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
+import { useAuth } from '@/context/auth-context';
 
 export default function ChatClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { toast } = useToast();
-
+  const { isAuthenticated } = useAuth();
+  
   const [url, setUrl] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const componentId = useId();
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+      return;
+    }
+
     const urlParam = searchParams.get('url');
     if (!urlParam) {
-      router.push('/');
+      router.push('/start');
       return;
     }
 
@@ -29,12 +37,12 @@ export default function ChatClient() {
 
     setMessages([
       {
-        id: crypto.randomUUID(),
+        id: `${componentId}-initial-message`,
         role: 'agent',
         content: `Hello! I'm your AI agent for ${decodedUrl}. How can I help you explore this site?`,
       },
     ]);
-  }, [searchParams, router]);
+  }, [searchParams, router, isAuthenticated, componentId]);
 
   const handleSendMessage = async (content: string) => {
     if (isSending || !content.trim()) return;
@@ -70,7 +78,7 @@ export default function ChatClient() {
     }
   };
 
-  if (!url) {
+  if (!isAuthenticated || !url) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
