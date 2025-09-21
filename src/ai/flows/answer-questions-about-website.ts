@@ -92,7 +92,7 @@ Follow these rules:
     *   Next, transform the user's question into a search query.
     *   Then, generate a direct search link for the given website. For example, if the user asks for "product details" on "www.flipkart.com", create a search URL like "https://www.flipkart.com/search?q=product+details".
     *   Present this search link to the user.
-    *   Finally, AFTER providing the link, try to answer the user's question using your own general knowledge.
+    *   Finally, AFTER providing the link, try to answer the user's question using your own general knowledge. Ensure there is a newline between the search link and your general knowledge answer to improve readability.
 
 3.  **Chat History Context:** Use the following chat history to maintain context within the session.
     {{#if chatHistory}}
