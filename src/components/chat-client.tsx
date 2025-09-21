@@ -27,16 +27,14 @@ export default function ChatClient() {
     const decodedUrl = decodeURIComponent(urlParam);
     setUrl(decodedUrl);
 
-    // Prevents adding initial message multiple times on re-renders
-    if (messages.length === 0) {
-      const initialMessage: Message = {
+    setMessages([
+      {
         id: crypto.randomUUID(),
         role: 'agent',
         content: `Hello! I'm your AI agent for ${decodedUrl}. How can I help you explore this site?`,
-      };
-      setMessages([initialMessage]);
-    }
-  }, [searchParams, router, messages.length]);
+      },
+    ]);
+  }, [searchParams, router]);
 
   const handleSendMessage = async (content: string) => {
     if (isSending || !content.trim()) return;
