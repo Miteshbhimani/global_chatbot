@@ -3,6 +3,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -18,7 +21,8 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/auth-context';
 import { LoaderCircle, Github } from 'lucide-react';
 import Link from 'next/link';
-import { Separator } from '@/components/ui/separator';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast';
 import Logo from '@/components/logo';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -54,47 +58,282 @@ const AppleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const loginSchema = z.object({
+  email: z.string().email({ message: "Invalid email address" }),
+  password: z.string().min(1, { message: "Password is required" }),
+});
+
+const signupSchema = z.object({
+  firstName: z.string().min(1, { message: "First name is required" }),
+  lastName: z.string().min(1, { message: "Last name is required" }),
+  email: z.string().email({ message: "Invalid email address" }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters" }),
+});
+
+
 type SocialProvider = 'Google' | 'GitHub' | 'Apple';
+type AuthStep = 'login' | 'signup' | 'verify';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [isEmailLoginLoading, setIsEmailLoginLoading] = useState(false);
-  const [isSignupLoading, setIsSignupLoading] = useState(false);
-  const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const { toast } = useToast();
+  
+  const [authStep, setAuthStep] = useState<AuthStep>('login');
+  const [isLoading, setIsLoading] = useState(false);
   const [socialLoginProvider, setSocialLoginProvider] = useState<SocialProvider | null>(null);
+  
+  const loginForm = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: "m@example.com", password: "password" },
+  });
+  
+  const signupForm = useForm<z.infer<typeof signupSchema>>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: { firstName: "", lastName: "", email: "", password: "" },
+  });
 
   const handleSocialLogin = async (provider: SocialProvider) => {
     setSocialLoginProvider(provider);
+    setIsLoading(true);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     login();
     router.push('/start');
+  };
+
+  const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // In a real app, you'd verify credentials here.
+    // We'll check for a mock "verified" user.
+    const user = localStorage.getItem(`user_${values.email}`);
+    if (user) {
+      const userData = JSON.parse(user);
+      if (userData.isVerified) {
+        login();
+        router.push('/start');
+      } else {
+        setAuthStep('verify');
+        setIsLoading(false);
+      }
+    } else {
+       toast({
+        title: "Login Failed",
+        description: "Invalid email or password.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  };
+
+  const onSignupSubmit = async (values: z.infer<typeof signupSchema>) => {
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    // Simulate user creation and store it in local storage
+    const newUser = {
+      email: values.email,
+      firstName: values.firstName,
+      isVerified: false, // Start as unverified
+    };
+    localStorage.setItem(`user_${values.email}`, JSON.stringify(newUser));
+    
+    signupForm.reset();
+    setAuthStep('verify'); // Move to verification step
+    setIsLoading(false);
+    toast({
+      title: "Account Created",
+      description: "Please check your email to verify your account.",
+    });
+  };
+
+  const handleVerification = async () => {
+    setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // This is where you would typically handle a token from an email link.
+    // For now, we find the "unverified" user and mark them as verified.
+    const unverifiedUserEmail = Object.keys(localStorage).find(key => key.startsWith('user_') && !JSON.parse(localStorage.getItem(key)!).isVerified);
+    if (unverifiedUserEmail) {
+        const key = unverifiedUserEmail;
+        const userData = JSON.parse(localStorage.getItem(key)!);
+        userData.isVerified = true;
+        localStorage.setItem(key, JSON.stringify(userData));
+        login();
+        router.push('/start');
+    } else {
+         toast({
+            title: "Verification Failed",
+            description: "Could not find user to verify.",
+            variant: "destructive",
+        });
+        setAuthStep('login');
+        setIsLoading(false);
+    }
   }
-
-  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsEmailLoginLoading(true);
-
-    // Simulate an API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    login(); // Set authenticated state
-    router.push('/start');
-  };
-
-  const handleSignup = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setIsSignupLoading(true);
-
-    // Simulate an API call for user creation
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    login(); // Log the user in after "creating" the account
-    setIsSignupOpen(false); // Close the dialog
-    router.push('/start');
-  };
   
   const isSocialLoginLoading = (provider: SocialProvider) => socialLoginProvider === provider;
+
+  const renderLogin = () => (
+    <Card className="w-full max-w-sm">
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">Sign in to your account</CardTitle>
+        <CardDescription>
+          Don&apos;t have an account?{' '}
+          <Button variant="link" className="p-0" onClick={() => setAuthStep('signup')}>Sign up</Button>
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4">
+          <Button variant="outline" onClick={() => handleSocialLogin('Google')} disabled={isLoading}>
+            {isSocialLoginLoading('Google') ? <LoaderCircle className="animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
+             Continue with Google
+          </Button>
+          <Button variant="outline" onClick={() => handleSocialLogin('GitHub')} disabled={isLoading}>
+            {isSocialLoginLoading('GitHub') ? <LoaderCircle className="animate-spin" /> : <Github className="mr-2 h-4 w-4" />}
+             Continue with GitHub
+          </Button>
+          <Button variant="outline" onClick={() => handleSocialLogin('Apple')} disabled={isLoading}>
+            {isSocialLoginLoading('Apple') ? <LoaderCircle className="animate-spin" /> : <AppleIcon className="mr-2 h-4 w-4" />}
+             Continue with Apple
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+            </div>
+          </div>
+
+          <Form {...loginForm}>
+            <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="grid gap-4">
+              <FormField
+                control={loginForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="grid gap-2">
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="m@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={loginForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem className="grid gap-2">
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? <LoaderCircle className="animate-spin" /> : 'Continue with Email'}
+              </Button>
+            </form>
+          </Form>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderSignup = () => (
+     <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Create an account</CardTitle>
+          <CardDescription>
+            Already have an account?{' '}
+            <Button variant="link" className="p-0" onClick={() => setAuthStep('login')}>Sign in</Button>
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+           <Form {...signupForm}>
+            <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={signupForm.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Max" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                 <FormField
+                  control={signupForm.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Robinson" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+               <FormField
+                control={signupForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input placeholder="m@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={signupForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+                {isLoading ? <LoaderCircle className="animate-spin" /> : 'Create an account'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+  );
+
+  const renderVerify = () => (
+      <Card className="w-full max-w-sm">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Verify your email</CardTitle>
+          <CardDescription>
+            A verification link has been sent to your email address. Click the button below to simulate verification.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="text-center">
+          <Button onClick={handleVerification} disabled={isLoading} className="w-full">
+            {isLoading ? <LoaderCircle className="animate-spin" /> : 'Complete Verification'}
+          </Button>
+           <Button variant="link" className="p-0 mt-4" onClick={() => setAuthStep('login')}>Back to Sign in</Button>
+        </CardContent>
+      </Card>
+  );
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
@@ -104,109 +343,11 @@ export default function LoginPage() {
             <span>TechnovaAI WebChat</span>
           </Link>
       </div>
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Sign in to your account</CardTitle>
-          <CardDescription>
-            Don&apos;t have an account?{' '}
-            <Dialog open={isSignupOpen} onOpenChange={setIsSignupOpen}>
-              <DialogTrigger asChild>
-                <Button variant="link" className="p-0">Sign up</Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Sign Up</DialogTitle>
-                  <DialogDescription>
-                    Enter your information to create an account.
-                  </DialogDescription>
-                </DialogHeader>
-                <form onSubmit={handleSignup} className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="first-name" className="text-right">
-                      First Name
-                    </Label>
-                    <Input id="first-name" placeholder="Max" required className="col-span-3" />
-                  </div>
-                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="last-name" className="text-right">
-                      Last Name
-                    </Label>
-                    <Input id="last-name" placeholder="Robinson" required className="col-span-3" />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="signup-email" className="text-right">
-                      Email
-                    </Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="m@example.com"
-                      required
-                      className="col-span-3"
-                    />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="signup-password" className="text-right">
-                      Password
-                    </Label>
-                    <Input id="signup-password" type="password" required className="col-span-3" />
-                  </div>
-                  <Button type="submit" className="w-full mt-2" disabled={isSignupLoading}>
-                    {isSignupLoading ? <LoaderCircle className="animate-spin" /> : 'Create an account'}
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            <Button variant="outline" onClick={() => handleSocialLogin('Google')} disabled={!!socialLoginProvider}>
-              {isSocialLoginLoading('Google') ? <LoaderCircle className="animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
-               Continue with Google
-            </Button>
-            <Button variant="outline" onClick={() => handleSocialLogin('GitHub')} disabled={!!socialLoginProvider}>
-              {isSocialLoginLoading('GitHub') ? <LoaderCircle className="animate-spin" /> : <Github className="mr-2 h-4 w-4" />}
-               Continue with GitHub
-            </Button>
-            <Button variant="outline" onClick={() => handleSocialLogin('Apple')} disabled={!!socialLoginProvider}>
-              {isSocialLoginLoading('Apple') ? <LoaderCircle className="animate-spin" /> : <AppleIcon className="mr-2 h-4 w-4" />}
-               Continue with Apple
-            </Button>
-
-            <div className="relative my-4">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">
-                  Or continue with email
-                </span>
-              </div>
-            </div>
-
-            <form onSubmit={handleLogin} className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  defaultValue="m@example.com"
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" required defaultValue="password" />
-              </div>
-              <Button type="submit" className="w-full" disabled={isEmailLoginLoading || !!socialLoginProvider}>
-                {isEmailLoginLoading ? <LoaderCircle className="animate-spin" /> : 'Continue with Email'}
-              </Button>
-            </form>
-          </div>
-        </CardContent>
-      </Card>
+      {authStep === 'login' && renderLogin()}
+      {authStep === 'signup' && renderSignup()}
+      {authStep === 'verify' && renderVerify()}
     </div>
   );
 }
+
+    
