@@ -39,12 +39,9 @@ export default function ChatClient() {
           setSession(existingSession);
           setMessages(existingSession.messages);
         } else {
-           toast({
-            title: 'Chat not found',
-            description: "The requested chat session doesn't exist.",
-            variant: 'destructive',
-          });
-          router.push('/start');
+           // This was causing the issue. Redirect without a toast.
+           router.push('/start');
+           return; // Prevent further execution
         }
       } else if (urlParam) {
         const decodedUrl = decodeURIComponent(urlParam);
@@ -65,6 +62,7 @@ export default function ChatClient() {
         router.replace(`/chat?sessionId=${newSession.id}`);
       } else {
         router.push('/start');
+        return; // Prevent further execution
       }
 
       setIsAuthenticating(false);
@@ -74,15 +72,17 @@ export default function ChatClient() {
   const updateSession = useCallback((newMessages: Message[]) => {
     if (!session) return;
     
+    // Find if any message in the session is from the user.
     const hasUserMessage = session.messages.some(m => m.role === 'user');
     let newTitle = session.title;
-
-    // Only set the title if a user message hasn't been sent before in this session
+  
+    // Only update the title if a user message has NOT been sent before in this session.
     if (!hasUserMessage) {
-        const firstUserMessage = newMessages.find(m => m.role === 'user');
-        if (firstUserMessage) {
-            newTitle = firstUserMessage.content.substring(0, 40) + (firstUserMessage.content.length > 40 ? '...' : '');
-        }
+      const firstUserMessage = newMessages.find(m => m.role === 'user');
+      if (firstUserMessage) {
+        const potentialTitle = firstUserMessage.content.substring(0, 40);
+        newTitle = potentialTitle.length === 40 ? `${potentialTitle}...` : potentialTitle;
+      }
     }
     
     const updatedSession = { 
