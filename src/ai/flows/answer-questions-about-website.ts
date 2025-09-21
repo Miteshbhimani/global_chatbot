@@ -104,6 +104,6 @@ const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
       websiteContent,
     });
     
-    return llmResponse.output() ?? { answer: "No response from AI." };
+    return llmResponse.output ?? { answer: "No response from AI." };
   }
 );
