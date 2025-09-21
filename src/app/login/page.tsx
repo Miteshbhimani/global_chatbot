@@ -16,9 +16,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/context/auth-context';
-import { LoaderCircle, Globe, Github } from 'lucide-react';
+import { LoaderCircle, Github } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import Logo from '@/components/logo';
 
 const GoogleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
@@ -99,8 +100,8 @@ export default function LoginPage() {
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
       <div className="absolute top-4 left-4">
          <Link href="/" className="flex items-center gap-2 font-bold text-lg">
-            <Globe className="h-6 w-6 text-primary" />
-            <span>WebChat Navigator</span>
+            <Logo className="h-6 w-6 text-primary" />
+            <span>TechnovaAI WebChat</span>
           </Link>
       </div>
       <Card className="w-full max-w-sm">

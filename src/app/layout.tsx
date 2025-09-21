@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'WebChat Navigator',
+  title: 'TechnovaAI WebChat',
   description: 'Chat with any website using an AI agent.',
 };
 

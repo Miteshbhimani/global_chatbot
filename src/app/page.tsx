@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, MessageSquare, Zap } from 'lucide-react';
+import { MessageSquare, Zap } from 'lucide-react';
+import Logo from '@/components/logo';
 
 export default function Home() {
   return (
@@ -14,7 +15,7 @@ export default function Home() {
                 Chat with Any Website, Instantly
               </h1>
               <p className="text-lg text-muted-foreground md:text-xl">
-                WebChat Navigator lets you start a conversation with an AI agent that has full knowledge of any website. Just enter a URL and start asking questions.
+                TechnovaAI WebChat lets you start a conversation with an AI agent that has full knowledge of any website. Just enter a URL and start asking questions.
               </p>
               <div>
                 <Button size="lg" asChild>
@@ -33,7 +34,7 @@ export default function Home() {
                   Key Features
                 </div>
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">
-                  Why You'll Love WebChat Navigator
+                  Why You'll Love TechnovaAI WebChat
                 </h2>
                 <p className="text-muted-foreground md:text-lg">
                   Unlock information faster and more intuitively than ever before.
@@ -79,7 +80,7 @@ export default function Home() {
             </div>
             <div className="mx-auto w-full max-w-sm space-y-2">
                <Button size="lg" asChild className="w-full">
-                  <Link href="/login">Launch WebChat Navigator</Link>
+                  <Link href="/login">Launch TechnovaAI WebChat</Link>
                 </Button>
             </div>
           </div>
@@ -88,7 +89,7 @@ export default function Home() {
 
       <footer className="flex w-full shrink-0 flex-col items-center justify-center gap-2 border-t px-4 py-6 sm:flex-row md:px-6">
         <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} WebChat Navigator. All rights reserved.
+          &copy; {new Date().getFullYear()} TechnovaAI WebChat. All rights reserved.
         </p>
         <nav className="flex gap-4 sm:ml-auto sm:gap-6">
           <Link href="/about" className="text-xs hover:underline">

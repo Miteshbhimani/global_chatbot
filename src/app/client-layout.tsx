@@ -5,8 +5,9 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Globe, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
+import Logo from '@/components/logo';
 
 export default function RootClientLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, logout } = useAuth();
@@ -22,8 +23,8 @@ export default function RootClientLayout({ children }: { children: React.ReactNo
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
           <Link href={isAuthenticated ? "/start" : "/"} className="flex items-center gap-2 font-bold">
-            <Globe className="h-6 w-6 text-primary" />
-            <span>WebChat Navigator</span>
+            <Logo className="h-6 w-6 text-primary" />
+            <span>TechnovaAI WebChat</span>
           </Link>
           <nav className="ml-auto flex items-center gap-2">
             <ThemeToggle />

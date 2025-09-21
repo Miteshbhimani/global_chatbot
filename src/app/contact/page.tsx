@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Globe, Mail, MessageSquare, Send } from 'lucide-react';
+import { Mail, MessageSquare, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,8 +32,8 @@ export default function ContactPage() {
                   <h3 className="text-xl font-semibold">Email Us</h3>
                   <p className="text-muted-foreground">
                     Send your questions to{' '}
-                    <a href="mailto:support@webchatnav.com" className="text-primary hover:underline">
-                      support@webchatnav.com
+                    <a href="mailto:support@technovaai.com" className="text-primary hover:underline">
+                      support@technovaai.com
                     </a>
                   </p>
                 </div>
@@ -78,7 +78,7 @@ export default function ContactPage() {
 
       <footer className="flex w-full shrink-0 flex-col items-center justify-center gap-2 border-t px-4 py-6 sm:flex-row md:px-6">
         <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} WebChat Navigator. All rights reserved.
+          &copy; {new Date().getFullYear()} TechnovaAI WebChat. All rights reserved.
         </p>
         <nav className="flex gap-4 sm:ml-auto sm:gap-6">
           <Link href="/about" className="text-xs hover:underline">

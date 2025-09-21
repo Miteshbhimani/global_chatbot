@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Globe, Users, Target } from 'lucide-react';
+import { Users, Target } from 'lucide-react';
+import Logo from '@/components/logo';
 
 export default function AboutPage() {
   return (
@@ -10,7 +11,7 @@ export default function AboutPage() {
           <div className="container px-4 text-center md:px-6">
             <div className="mx-auto max-w-3xl space-y-4">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                About WebChat Navigator
+                About TechnovaAI WebChat
               </h1>
               <p className="text-lg text-muted-foreground md:text-xl">
                 We are on a mission to revolutionize how people interact with web content.
@@ -29,7 +30,7 @@ export default function AboutPage() {
                 Making Information Accessible
               </h2>
               <p className="text-muted-foreground md:text-lg">
-                WebChat Navigator was born from a simple idea: what if you could talk to a website? We believe that accessing information should be as natural as having a conversation. Our goal is to break down the barriers of traditional web browsing and create a more intuitive, efficient, and enjoyable way to find the answers you need.
+                TechnovaAI WebChat was born from a simple idea: what if you could talk to a website? We believe that accessing information should be as natural as having a conversation. Our goal is to break down the barriers of traditional web browsing and create a more intuitive, efficient, and enjoyable way to find the answers you need.
               </p>
             </div>
             <div className="flex justify-center">
@@ -60,7 +61,7 @@ export default function AboutPage() {
 
       <footer className="flex w-full shrink-0 flex-col items-center justify-center gap-2 border-t px-4 py-6 sm:flex-row md:px-6">
         <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} WebChat Navigator. All rights reserved.
+          &copy; {new Date().getFullYear()} TechnovaAI WebChat. All rights reserved.
         </p>
         <nav className="flex gap-4 sm:ml-auto sm:gap-6">
           <Link href="/about" className="text-xs hover:underline">
