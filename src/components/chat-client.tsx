@@ -74,13 +74,21 @@ export default function ChatClient() {
   const updateSession = useCallback((newMessages: Message[]) => {
     if (!session) return;
     
-    const firstUserMessage = newMessages.find(m => m.role === 'user');
-    const newTitle = firstUserMessage ? firstUserMessage.content.substring(0, 30) + '...' : session.title;
+    const hasUserMessage = session.messages.some(m => m.role === 'user');
+    let newTitle = session.title;
 
+    // Only set the title if a user message hasn't been sent before in this session
+    if (!hasUserMessage) {
+        const firstUserMessage = newMessages.find(m => m.role === 'user');
+        if (firstUserMessage) {
+            newTitle = firstUserMessage.content.substring(0, 40) + (firstUserMessage.content.length > 40 ? '...' : '');
+        }
+    }
+    
     const updatedSession = { 
       ...session, 
       messages: newMessages,
-      title: session.messages.some(m => m.role === 'user') ? session.title : newTitle, // Only update title on first user message
+      title: newTitle,
     };
     
     setSession(updatedSession);
@@ -99,6 +107,7 @@ export default function ChatClient() {
 
     const updatedMessages = [...messages, newUserMessage];
     setMessages(updatedMessages);
+    updateSession(updatedMessages); // Save user message immediately
     setIsSending(true);
 
     try {
