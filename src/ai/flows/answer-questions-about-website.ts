@@ -126,9 +126,15 @@ const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
       websiteContent,
     });
 
-    for (let toolResponse; (toolResponse = llmResponse.toolRequest()); ) {
-      const toolOutput = await toolResponse.run();
-      llmResponse = await toolResponse.next(toolOutput);
+    while (llmResponse.isPending()) {
+      const toolRequest = llmResponse.toolRequest();
+      if (toolRequest) {
+        const toolResponse = await toolRequest.run();
+        llmResponse = await toolRequest.next(toolResponse);
+      } else {
+        // If the model is pending but there is no tool request, break the loop.
+        break;
+      }
     }
     
     return llmResponse.output() ?? { answer: "No response from AI." };
