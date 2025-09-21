@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useId, useCallback } from 'react';
@@ -45,8 +46,9 @@ export default function ChatClient() {
         }
       } else if (urlParam) {
         const decodedUrl = decodeURIComponent(urlParam);
+        const newSessionId = crypto.randomUUID();
         const newSession: ChatSession = {
-          id: crypto.randomUUID(),
+          id: newSessionId,
           url: decodedUrl,
           title: `Conversation about ${decodedUrl}`,
           messages: [{
@@ -59,7 +61,7 @@ export default function ChatClient() {
         setSession(newSession);
         setMessages(newSession.messages);
         // Navigate to the new session's URL
-        router.replace(`/chat?sessionId=${newSession.id}`);
+        router.replace(`/chat?sessionId=${newSessionId}`);
       } else {
         router.push('/start');
         return; // Prevent further execution
