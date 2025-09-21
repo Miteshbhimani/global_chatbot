@@ -121,19 +121,16 @@ const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
   async input => {
     const websiteContent = await extractTextFromWebsite(input.websiteUrl);
 
-    const llmResponse = await prompt({
+    let llmResponse = await prompt({
       ...input,
       websiteContent,
     });
 
-    if (!llmResponse.isDone()) {
-      const toolResponse = await llmResponse.next();
-      if (!toolResponse.isDone()) {
-        const finalResponse = await toolResponse.next();
-        return finalResponse.output()!;
-      }
-      return toolResponse.output()!;
+    for (let toolResponse; (toolResponse = llmResponse.toolRequest()); ) {
+      const toolOutput = await toolResponse.run();
+      llmResponse = await toolResponse.next(toolOutput);
     }
-    return llmResponse.output()!;
+    
+    return llmResponse.output() ?? { answer: "No response from AI." };
   }
 );
