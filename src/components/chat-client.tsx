@@ -68,7 +68,6 @@ export default function ChatClient() {
         id: crypto.randomUUID(),
         role: 'agent',
         content: response.answer,
-        imageUrl: response.imageUrl,
       };
 
       setMessages(prevMessages => [...prevMessages, newAgentMessage]);

@@ -12,7 +12,6 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {JSDOM} from 'jsdom';
-import {generateImage} from './generate-image';
 
 const AnswerQuestionsAboutWebsiteInputSchema = z.object({
   websiteUrl: z.string().describe('The URL of the website to answer questions about.'),
@@ -23,7 +22,6 @@ export type AnswerQuestionsAboutWebsiteInput = z.infer<typeof AnswerQuestionsAbo
 
 const AnswerQuestionsAboutWebsiteOutputSchema = z.object({
   answer: z.string().describe('The answer to the question about the website.'),
-  imageUrl: z.string().optional().describe('An image URL relevant to the answer, if requested.'),
 });
 export type AnswerQuestionsAboutWebsiteOutput = z.infer<typeof AnswerQuestionsAboutWebsiteOutputSchema>;
 
@@ -61,26 +59,8 @@ export async function answerQuestionsAboutWebsite(
   return answerQuestionsAboutWebsiteFlow(input);
 }
 
-const generateImageTool = ai.defineTool(
-  {
-    name: 'generateImage',
-    description: 'Generates an image based on a text description.',
-    inputSchema: z.object({
-      prompt: z.string().describe('A detailed text description of the image to generate.'),
-    }),
-    outputSchema: z.object({
-      imageUrl: z.string(),
-    }),
-  },
-  async input => {
-    const {imageUrl} = await generateImage({prompt: input.prompt});
-    return {imageUrl};
-  }
-);
-
 const prompt = ai.definePrompt({
   name: 'answerQuestionsAboutWebsitePrompt',
-  tools: [generateImageTool],
   input: {
     schema: z.object({
       ...AnswerQuestionsAboutWebsiteInputSchema.shape,
@@ -98,8 +78,6 @@ Here is the content of the website:
 First, try to answer the question using the provided website content.
 
 If the website content starts with "Error:", it means you were unable to access the website's content. This might be because the site has security measures that block automated access. In this situation, you MUST inform the user that you couldn't access the site, but then you MUST try to answer their question using your own general knowledge. For example, if they ask for product specifications, provide them from your knowledge base. Do not make up an excuse like "the site is overloaded". Be direct about the failure but still try to be helpful.
-
-If the user's question asks for an image, a picture, or to be shown something, you MUST use the generateImage tool to generate an image. Provide a text answer that complements the image.
 
 Use the following chat history to maintain context within the session:
 {{#if chatHistory}}
@@ -121,21 +99,10 @@ const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
   async input => {
     const websiteContent = await extractTextFromWebsite(input.websiteUrl);
 
-    let llmResponse = await prompt({
+    const llmResponse = await prompt({
       ...input,
       websiteContent,
     });
-
-    while (llmResponse.isPending()) {
-      const toolRequest = llmResponse.toolRequest();
-      if (toolRequest) {
-        const toolResponse = await toolRequest.run();
-        llmResponse = await toolRequest.next(toolResponse);
-      } else {
-        // If the model is pending but there is no tool request, break the loop.
-        break;
-      }
-    }
     
     return llmResponse.output() ?? { answer: "No response from AI." };
   }

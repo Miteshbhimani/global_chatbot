@@ -8,5 +8,4 @@
 
 import '@/ai/flows/answer-questions-about-website';
 import '@/ai/flows/chat-history-context';
-import '@/ai/flows/generate-image';
 import '@/ai/flows/summarize-website';

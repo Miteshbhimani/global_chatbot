@@ -57,16 +57,6 @@ export default function MessageBubble({message}: MessageBubbleProps) {
             : 'rounded-bl-none bg-card text-card-foreground'
         )}
       >
-        {message.imageUrl && (
-          <div className="relative aspect-square w-full">
-            <Image
-              src={message.imageUrl}
-              alt="Generated image"
-              fill
-              className="rounded-md object-cover"
-            />
-          </div>
-        )}
         {message.content && (
           <p className="whitespace-pre-wrap">
             <Urlify text={message.content} />
