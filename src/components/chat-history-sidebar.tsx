@@ -14,13 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 
-// Mock data for chat history
-const chatHistory = [
-  { id: '1', title: 'Conversation about Next.js', date: '2024-07-29' },
-  { id: '2', title: 'React best practices discussion', date: '2024-07-28' },
-  { id: '3', title: 'Tailwind CSS tips and tricks', date: '2024-07-27' },
-  { id: '4', title: 'Firebase integration help', date: '2024-07-26' },
-];
+// Mock data for chat history - now empty
+const chatHistory: { id: string; title: string; date: string }[] = [];
 
 export default function ChatHistorySidebar() {
   return (
@@ -38,22 +33,28 @@ export default function ChatHistorySidebar() {
         </Button>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMenu>
-          {chatHistory.map((chat) => (
-            <SidebarMenuItem key={chat.id}>
-              <SidebarMenuButton
-                tooltip={chat.title}
-                asChild
-                className="w-full justify-start"
-                variant="ghost"
-              >
-                <Link href={`/chat/history/${chat.id}`}>
-                  <span>{chat.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+        {chatHistory.length > 0 ? (
+          <SidebarMenu>
+            {chatHistory.map((chat) => (
+              <SidebarMenuItem key={chat.id}>
+                <SidebarMenuButton
+                  tooltip={chat.title}
+                  asChild
+                  className="w-full justify-start"
+                  variant="ghost"
+                >
+                  <Link href={`/chat/history/${chat.id}`}>
+                    <span>{chat.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        ) : (
+          <div className="p-4 text-center text-sm text-muted-foreground">
+            No chat history yet.
+          </div>
+        )}
       </SidebarContent>
     </Sidebar>
   );
