@@ -53,15 +53,18 @@ const AppleIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+type SocialProvider = 'Google' | 'GitHub' | 'Apple';
+
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [isEmailLoginLoading, setIsEmailLoginLoading] = useState(false);
   const [isSignupLoading, setIsSignupLoading] = useState(false);
   const [isSignupOpen, setIsSignupOpen] = useState(false);
+  const [socialLoginProvider, setSocialLoginProvider] = useState<SocialProvider | null>(null);
 
-  const handleSocialLogin = async () => {
-    setIsLoginLoading(true);
+  const handleSocialLogin = async (provider: SocialProvider) => {
+    setSocialLoginProvider(provider);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     login();
     router.push('/start');
@@ -69,7 +72,7 @@ export default function LoginPage() {
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setIsLoginLoading(true);
+    setIsEmailLoginLoading(true);
 
     // Simulate an API call
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -89,6 +92,8 @@ export default function LoginPage() {
     setIsSignupOpen(false); // Close the dialog
     router.push('/start');
   };
+  
+  const isSocialLoginLoading = (provider: SocialProvider) => socialLoginProvider === provider;
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-background p-4">
@@ -155,14 +160,17 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4">
-            <Button variant="outline" onClick={handleSocialLogin} disabled={isLoginLoading}>
-              <GoogleIcon className="mr-2 h-4 w-4" /> Continue with Google
+            <Button variant="outline" onClick={() => handleSocialLogin('Google')} disabled={!!socialLoginProvider}>
+              {isSocialLoginLoading('Google') ? <LoaderCircle className="animate-spin" /> : <GoogleIcon className="mr-2 h-4 w-4" />}
+               Continue with Google
             </Button>
-            <Button variant="outline" onClick={handleSocialLogin} disabled={isLoginLoading}>
-              <Github className="mr-2 h-4 w-4" /> Continue with GitHub
+            <Button variant="outline" onClick={() => handleSocialLogin('GitHub')} disabled={!!socialLoginProvider}>
+              {isSocialLoginLoading('GitHub') ? <LoaderCircle className="animate-spin" /> : <Github className="mr-2 h-4 w-4" />}
+               Continue with GitHub
             </Button>
-            <Button variant="outline" onClick={handleSocialLogin} disabled={isLoginLoading}>
-              <AppleIcon className="mr-2 h-4 w-4" /> Continue with Apple
+            <Button variant="outline" onClick={() => handleSocialLogin('Apple')} disabled={!!socialLoginProvider}>
+              {isSocialLoginLoading('Apple') ? <LoaderCircle className="animate-spin" /> : <AppleIcon className="mr-2 h-4 w-4" />}
+               Continue with Apple
             </Button>
 
             <div className="relative my-4">
@@ -191,8 +199,8 @@ export default function LoginPage() {
                 <Label htmlFor="password">Password</Label>
                 <Input id="password" type="password" required defaultValue="password" />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoginLoading}>
-                {isLoginLoading ? <LoaderCircle className="animate-spin" /> : 'Continue with Email'}
+              <Button type="submit" className="w-full" disabled={isEmailLoginLoading || !!socialLoginProvider}>
+                {isEmailLoginLoading ? <LoaderCircle className="animate-spin" /> : 'Continue with Email'}
               </Button>
             </form>
           </div>
@@ -201,5 +209,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
