@@ -14,7 +14,7 @@ export default function AboutPage() {
                 About TechnovaAI WebChat
               </h1>
               <p className="text-lg text-muted-foreground md:text-xl">
-                We are on a mission to revolutionize how people interact with web content.
+                We are on a mission to revolutionize how people interact with web content. Our technology transforms any website into a conversational experience, making information more accessible and engaging than ever before.
               </p>
             </div>
           </div>
