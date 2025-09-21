@@ -60,8 +60,9 @@ export default function ChatClient() {
         };
         setSession(newSession);
         setMessages(newSession.messages);
-        // Navigate to the new session's URL
+        // Navigate to the new session's URL and then stop execution.
         router.replace(`/chat?sessionId=${newSessionId}`);
+        return; 
       } else {
         router.push('/start');
         return; // Prevent further execution
@@ -149,3 +150,4 @@ export default function ChatClient() {
     <ChatLayout url={session.url} messages={messages} onSendMessage={handleSendMessage} isSending={isSending} />
   );
 }
+
