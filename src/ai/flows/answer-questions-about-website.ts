@@ -25,7 +25,15 @@ const AnswerQuestionsAboutWebsiteOutputSchema = z.object({
 });
 export type AnswerQuestionsAboutWebsiteOutput = z.infer<typeof AnswerQuestionsAboutWebsiteOutputSchema>;
 
-// Extracted from website-content-summarization.ts and adapted for this flow
+// List of domains that are known to block scraping attempts.
+const BLOCKED_DOMAINS = [
+  'flipkart.com',
+  'amazon.com',
+  'walmart.com',
+  'bestbuy.com',
+  'target.com',
+];
+
 async function extractTextFromWebsite(url: string): Promise<string> {
   try {
     const response = await fetch(url, {
@@ -64,30 +72,37 @@ const prompt = ai.definePrompt({
   input: {
     schema: z.object({
       ...AnswerQuestionsAboutWebsiteInputSchema.shape,
-      websiteContent: z.string().describe('The text content of the website.'),
+      websiteContent: z.string().describe('The text content of the website. This may be an error message or empty if the site is blocked.'),
     }),
   },
   output: {schema: AnswerQuestionsAboutWebsiteOutputSchema},
-  prompt: `You are a helpful chat agent. Your primary goal is to answer questions based on the content of a website.
+  prompt: `You are a helpful chat agent. Your goal is to answer questions based on the provided website content or, if blocked, act as a smart search assistant.
 
 The website URL is: {{{websiteUrl}}}
 
 Here is the content of the website:
 {{{websiteContent}}}
 
-First, try to answer the question using the provided website content.
+Follow these rules:
 
-If the website content starts with "Error:", it means you were unable to access the website's content. This might be because the site has security measures that block automated access. In this situation, you MUST inform the user that you couldn't access the site, but then you MUST try to answer their question using your own general knowledge. For example, if they ask for product specifications, provide them from your knowledge base. Do not make up an excuse like "the site is overloaded". Be direct about the failure but still try to be helpful.
+1.  **If Website Content is Available:** If the \`websiteContent\` is not an error, use it as the primary source to answer the user's question.
 
-Use the following chat history to maintain context within the session:
-{{#if chatHistory}}
-{{{chatHistory}}}
-{{else}}
-There is no chat history.
-{{/if}}
+2.  **If Website is Blocked or Content is an Error:**
+    *   First, acknowledge that you couldn't access the live page content from the URL.
+    *   Next, transform the user's question into a search query.
+    *   Then, generate a direct search link for the given website. For example, if the user asks for "product details" on "www.flipkart.com", create a search URL like "https://www.flipkart.com/search?q=product+details".
+    *   Present this search link to the user.
+    *   Finally, AFTER providing the link, try to answer the user's question using your own general knowledge.
+
+3.  **Chat History Context:** Use the following chat history to maintain context within the session.
+    {{#if chatHistory}}
+    {{{chatHistory}}}
+    {{else}}
+    There is no chat history.
+    {{/if}}
 
 Now, answer the following question:
-{{{question}}}`,
+"{{{question}}}"`,
 });
 
 const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
@@ -97,8 +112,17 @@ const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
     outputSchema: AnswerQuestionsAboutWebsiteOutputSchema,
   },
   async input => {
-    const websiteContent = await extractTextFromWebsite(input.websiteUrl);
+    let websiteContent = '';
+    const url = new URL(input.websiteUrl);
+    const domain = url.hostname.replace(/^www\./, '');
 
+    // If the domain is in our blocked list, don't even try to fetch it.
+    if (BLOCKED_DOMAINS.includes(domain)) {
+        websiteContent = `Error: The website ${url.hostname} is known to block automated access.`;
+    } else {
+        websiteContent = await extractTextFromWebsite(input.websiteUrl);
+    }
+    
     const llmResponse = await prompt({
       ...input,
       websiteContent,
