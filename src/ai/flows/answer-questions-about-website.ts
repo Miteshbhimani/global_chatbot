@@ -10,6 +10,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { JSDOM } from 'jsdom';
 
 const AnswerQuestionsAboutWebsiteInputSchema = z.object({
   websiteUrl: z.string().describe('The URL of the website to answer questions about.'),
@@ -23,17 +24,41 @@ const AnswerQuestionsAboutWebsiteOutputSchema = z.object({
 });
 export type AnswerQuestionsAboutWebsiteOutput = z.infer<typeof AnswerQuestionsAboutWebsiteOutputSchema>;
 
+// Extracted from website-content-summarization.ts and adapted for this flow
+async function extractTextFromWebsite(url: string): Promise<string> {
+  try {
+    const response = await fetch(url);
+    const html = await response.text();
+    const dom = new JSDOM(html);
+    const document = dom.window.document;
+    // Remove script and style elements to avoid including irrelevant code in the prompt
+    document.querySelectorAll('script, style').forEach((el) => el.remove());
+    const textContent = document.body ? document.body.textContent || '' : '';
+    // Condense whitespace
+    return textContent.replace(/\s\s+/g, ' ').trim();
+  } catch (error) {
+    console.error('Error fetching or parsing website:', error);
+    return 'Error: Could not fetch or parse website content.';
+  }
+}
+
 export async function answerQuestionsAboutWebsite(input: AnswerQuestionsAboutWebsiteInput): Promise<AnswerQuestionsAboutWebsiteOutput> {
   return answerQuestionsAboutWebsiteFlow(input);
 }
 
 const prompt = ai.definePrompt({
   name: 'answerQuestionsAboutWebsitePrompt',
-  input: {schema: AnswerQuestionsAboutWebsiteInputSchema},
+  input: {schema: z.object({
+    ...AnswerQuestionsAboutWebsiteInputSchema.shape,
+    websiteContent: z.string().describe('The text content of the website.'),
+  })},
   output: {schema: AnswerQuestionsAboutWebsiteOutputSchema},
   prompt: `You are a helpful chat agent answering questions about the content of a website.
 
   The website URL is: {{{websiteUrl}}}
+
+  Here is the content of the website:
+  {{{websiteContent}}}
 
   Use the following chat history to maintain context within the session:
   {{#if chatHistory}}
@@ -42,7 +67,7 @@ const prompt = ai.definePrompt({
   There is no chat history.
   {{/if}}
 
-  Now, answer the following question:
+  Now, answer the following question based on the website content:
   {{{question}}}`,
 });
 
@@ -53,7 +78,12 @@ const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
     outputSchema: AnswerQuestionsAboutWebsiteOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const websiteContent = await extractTextFromWebsite(input.websiteUrl);
+
+    const {output} = await prompt({
+      ...input,
+      websiteContent,
+    });
     return output!;
   }
 );
