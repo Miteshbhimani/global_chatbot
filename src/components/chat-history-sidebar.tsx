@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -13,11 +14,21 @@ import {
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
-
-// Mock data for chat history - now empty
-const chatHistory: { id: string; title: string; date: string }[] = [];
+import type { ChatSession } from '@/lib/types';
+import { getChatHistory } from '@/lib/history';
+import { formatDistanceToNow } from 'date-fns';
 
 export default function ChatHistorySidebar() {
+  const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
+
+  useEffect(() => {
+    // This effect will run on the client side, where localStorage is available.
+    // A listener could be added here to update the history in real-time
+    // if another tab makes a change.
+    setChatHistory(getChatHistory());
+  }, []);
+
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -40,11 +51,14 @@ export default function ChatHistorySidebar() {
                 <SidebarMenuButton
                   tooltip={chat.title}
                   asChild
-                  className="w-full justify-start"
+                  className="h-auto w-full justify-start py-2"
                   variant="ghost"
                 >
-                  <Link href={`/chat/history/${chat.id}`}>
-                    <span>{chat.title}</span>
+                  <Link href={`/chat?sessionId=${chat.id}`} className="flex flex-col items-start">
+                    <span className="truncate">{chat.title}</span>
+                     <span className="text-xs text-muted-foreground">
+                      {formatDistanceToNow(new Date(chat.createdAt), { addSuffix: true })}
+                    </span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

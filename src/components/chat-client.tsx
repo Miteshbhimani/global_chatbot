@@ -1,13 +1,15 @@
 'use client';
 
-import { useState, useEffect, useId } from 'react';
+import { useState, useEffect, useId, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import type { Message } from '@/lib/types';
+import type { Message, ChatSession } from '@/lib/types';
 import { getAgentResponse } from '@/lib/actions';
 import ChatLayout from '@/components/chat-layout';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
+import { getChatSession, saveChatSession } from '@/lib/history';
+
 
 export default function ChatClient() {
   const searchParams = useSearchParams();
@@ -15,7 +17,7 @@ export default function ChatClient() {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   
-  const [url, setUrl] = useState('');
+  const [session, setSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(true);
@@ -28,28 +30,66 @@ export default function ChatClient() {
     }
 
     if (isAuthenticated === true) {
+      const sessionId = searchParams.get('sessionId');
       const urlParam = searchParams.get('url');
-      if (!urlParam) {
+
+      if (sessionId) {
+        const existingSession = getChatSession(sessionId);
+        if (existingSession) {
+          setSession(existingSession);
+          setMessages(existingSession.messages);
+        } else {
+           toast({
+            title: 'Chat not found',
+            description: "The requested chat session doesn't exist.",
+            variant: 'destructive',
+          });
+          router.push('/start');
+        }
+      } else if (urlParam) {
+        const decodedUrl = decodeURIComponent(urlParam);
+        const newSession: ChatSession = {
+          id: crypto.randomUUID(),
+          url: decodedUrl,
+          title: `Conversation about ${decodedUrl}`,
+          messages: [{
+            id: `${componentId}-initial-message`,
+            role: 'agent',
+            content: `Hello! I'm your AI agent for ${decodedUrl}. How can I help you explore this site?`,
+          }],
+          createdAt: new Date().toISOString(),
+        };
+        setSession(newSession);
+        setMessages(newSession.messages);
+        // Navigate to the new session's URL
+        router.replace(`/chat?sessionId=${newSession.id}`);
+      } else {
         router.push('/start');
-        return;
       }
 
-      const decodedUrl = decodeURIComponent(urlParam);
-      setUrl(decodedUrl);
-
-      setMessages([
-        {
-          id: `${componentId}-initial-message`,
-          role: 'agent',
-          content: `Hello! I'm your AI agent for ${decodedUrl}. How can I help you explore this site?`,
-        },
-      ]);
       setIsAuthenticating(false);
     }
-  }, [searchParams, router, isAuthenticated, componentId]);
+  }, [searchParams, router, isAuthenticated, componentId, toast]);
+
+  const updateSession = useCallback((newMessages: Message[]) => {
+    if (!session) return;
+    
+    const firstUserMessage = newMessages.find(m => m.role === 'user');
+    const newTitle = firstUserMessage ? firstUserMessage.content.substring(0, 30) + '...' : session.title;
+
+    const updatedSession = { 
+      ...session, 
+      messages: newMessages,
+      title: session.messages.some(m => m.role === 'user') ? session.title : newTitle, // Only update title on first user message
+    };
+    
+    setSession(updatedSession);
+    saveChatSession(updatedSession);
+  }, [session]);
+
 
   const handleSendMessage = async (content: string) => {
-    if (isSending || !content.trim()) return;
+    if (isSending || !content.trim() || !session) return;
 
     const newUserMessage: Message = {
       id: crypto.randomUUID(),
@@ -62,13 +102,17 @@ export default function ChatClient() {
     setIsSending(true);
 
     try {
-      const response = await getAgentResponse(url, content, updatedMessages);
+      const response = await getAgentResponse(session.url, content, updatedMessages);
       const newAgentMessage: Message = {
         id: crypto.randomUUID(),
         role: 'agent',
         content: response,
       };
-      setMessages((prev) => [...prev, newAgentMessage]);
+      
+      const finalMessages = [...updatedMessages, newAgentMessage];
+      setMessages(finalMessages);
+      updateSession(finalMessages);
+
     } catch (error) {
       toast({
         title: 'Error',
@@ -82,7 +126,7 @@ export default function ChatClient() {
     }
   };
 
-  if (isAuthenticating || !url) {
+  if (isAuthenticating || !session) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -91,6 +135,6 @@ export default function ChatClient() {
   }
 
   return (
-    <ChatLayout url={url} messages={messages} onSendMessage={handleSendMessage} isSending={isSending} />
+    <ChatLayout url={session.url} messages={messages} onSendMessage={handleSendMessage} isSending={isSending} />
   );
 }

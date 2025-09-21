@@ -48,6 +48,7 @@ export default function UrlInputForm() {
     }
 
     setIsLoading(true);
+    // Instead of just url, we create a new session which will have a unique ID
     router.push(`/chat?url=${encodeURIComponent(validUrl)}`);
   };
 
