@@ -1,10 +1,9 @@
-
 'use client';
 
 import { useState, useEffect, useId } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { Message } from '@/lib/types';
-import { getAgentResponse } from '@/lib/actions';
+import { getAgentResponse, getSummary } from '@/lib/actions';
 import ChatLayout from '@/components/chat-layout';
 import { useToast } from '@/hooks/use-toast';
 import { LoaderCircle } from 'lucide-react';
@@ -85,6 +84,32 @@ export default function ChatClient() {
       setIsSending(false);
     }
   };
+  
+  const handleSummarize = async () => {
+    if (isSending || !url) return;
+
+    setIsSending(true);
+    try {
+      const response = await getSummary(url);
+      const newAgentMessage: Message = {
+        id: crypto.randomUUID(),
+        role: 'agent',
+        content: response,
+      };
+      
+      setMessages((prevMessages) => [...prevMessages, newAgentMessage]);
+
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to get a summary from the agent.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
+
 
   if (isLoading || !url) {
     return (
@@ -95,6 +120,12 @@ export default function ChatClient() {
   }
 
   return (
-    <ChatLayout url={url} messages={messages} onSendMessage={handleSendMessage} isSending={isSending} />
+    <ChatLayout
+      url={url}
+      messages={messages}
+      onSendMessage={handleSendMessage}
+      onSummarize={handleSummarize}
+      isSending={isSending}
+    />
   );
 }

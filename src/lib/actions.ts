@@ -1,6 +1,7 @@
 'use server';
 
 import { answerQuestionsAboutWebsite } from '@/ai/flows/answer-questions-about-website';
+import { summarizeWebsite } from '@/ai/flows/summarize-website';
 import type { Message } from '@/lib/types';
 
 export async function getAgentResponse(
@@ -29,5 +30,20 @@ export async function getAgentResponse(
   } catch (error) {
     console.error('Error getting agent response:', error);
     return 'An error occurred while communicating with the agent. Please check the console for more details.';
+  }
+}
+
+export async function getSummary(url: string): Promise<string> {
+  try {
+    const response = await summarizeWebsite({ websiteUrl: url });
+
+    if (!response || !response.summary) {
+      return 'I apologize, but I was unable to generate a summary. Please try again.';
+    }
+
+    return response.summary;
+  } catch (error) {
+    console.error('Error getting summary:', error);
+    return 'An error occurred while generating the summary. Please check the console for more details.';
   }
 }
