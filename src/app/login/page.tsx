@@ -85,7 +85,7 @@ export default function LoginPage() {
   
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: "m@example.com", password: "password" },
+    defaultValues: { email: "", password: "" },
   });
   
   const signupForm = useForm<z.infer<typeof signupSchema>>({
@@ -113,6 +113,11 @@ export default function LoginPage() {
         login();
         router.push('/start');
       } else {
+        toast({
+            title: "Verification Required",
+            description: "Please check your email to verify your account before logging in.",
+            variant: "destructive",
+        });
         setAuthStep('verify');
         setIsLoading(false);
       }
@@ -159,17 +164,20 @@ export default function LoginPage() {
         const userData = JSON.parse(localStorage.getItem(key)!);
         userData.isVerified = true;
         localStorage.setItem(key, JSON.stringify(userData));
-        login();
-        router.push('/start');
+        toast({
+            title: "Verification Successful",
+            description: "Your account has been verified. You can now log in.",
+        });
+        setAuthStep('login');
     } else {
          toast({
             title: "Verification Failed",
-            description: "Could not find user to verify.",
+            description: "Could not find user to verify. You may have already been verified.",
             variant: "destructive",
         });
         setAuthStep('login');
-        setIsLoading(false);
     }
+    setIsLoading(false);
   }
   
   const isSocialLoginLoading = (provider: SocialProvider) => socialLoginProvider === provider;
@@ -323,12 +331,12 @@ export default function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Verify your email</CardTitle>
           <CardDescription>
-            A verification link has been sent to your email address. Click the button below to simulate verification.
+            A verification link has been sent to your email address. Click the button below to simulate clicking the link in your email.
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
           <Button onClick={handleVerification} disabled={isLoading} className="w-full">
-            {isLoading ? <LoaderCircle className="animate-spin" /> : 'Complete Verification'}
+            {isLoading ? <LoaderCircle className="animate-spin" /> : 'Simulate Email Verification'}
           </Button>
            <Button variant="link" className="p-0 mt-4" onClick={() => setAuthStep('login')}>Back to Sign in</Button>
         </CardContent>
@@ -349,5 +357,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
