@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/auth-context';
 import { Globe } from 'lucide-react';
@@ -12,18 +12,21 @@ import { LoaderCircle } from 'lucide-react';
 export default function StartPage() {
   const { isAuthenticated } = useAuth();
   const router = useRouter();
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isAuthenticated === false) {
       router.push('/login');
+    } else if (isAuthenticated === true) {
+      setIsAuthenticating(false);
     }
   }, [isAuthenticated, router]);
 
-  if (!isAuthenticated) {
+  if (isAuthenticating) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
-        <p className="mt-4 text-muted-foreground">Redirecting to login...</p>
+        <p className="mt-4 text-muted-foreground">Verifying authentication...</p>
       </div>
     );
   }

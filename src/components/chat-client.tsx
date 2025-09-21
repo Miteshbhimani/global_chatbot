@@ -18,30 +18,34 @@ export default function ChatClient() {
   const [url, setUrl] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [isAuthenticating, setIsAuthenticating] = useState(true);
   const componentId = useId();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (isAuthenticated === false) {
       router.push('/login');
       return;
     }
 
-    const urlParam = searchParams.get('url');
-    if (!urlParam) {
-      router.push('/start');
-      return;
+    if (isAuthenticated === true) {
+      const urlParam = searchParams.get('url');
+      if (!urlParam) {
+        router.push('/start');
+        return;
+      }
+
+      const decodedUrl = decodeURIComponent(urlParam);
+      setUrl(decodedUrl);
+
+      setMessages([
+        {
+          id: `${componentId}-initial-message`,
+          role: 'agent',
+          content: `Hello! I'm your AI agent for ${decodedUrl}. How can I help you explore this site?`,
+        },
+      ]);
+      setIsAuthenticating(false);
     }
-
-    const decodedUrl = decodeURIComponent(urlParam);
-    setUrl(decodedUrl);
-
-    setMessages([
-      {
-        id: `${componentId}-initial-message`,
-        role: 'agent',
-        content: `Hello! I'm your AI agent for ${decodedUrl}. How can I help you explore this site?`,
-      },
-    ]);
   }, [searchParams, router, isAuthenticated, componentId]);
 
   const handleSendMessage = async (content: string) => {
@@ -78,7 +82,7 @@ export default function ChatClient() {
     }
   };
 
-  if (!isAuthenticated || !url) {
+  if (isAuthenticating || !url) {
     return (
       <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
         <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
