@@ -41,6 +41,9 @@ export default function RootClientLayout({ children }: { children: React.ReactNo
                   <Link href="/about">About Us</Link>
                 </Button>
                 <Button variant="ghost" asChild>
+                  <Link href="/team">Our Team</Link>
+                </Button>
+                <Button variant="ghost" asChild>
                   <Link href="/contact">Contact Us</Link>
                 </Button>
                 <Button asChild>

@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Mail, Phone, Send, Linkedin } from 'lucide-react';
@@ -110,6 +111,9 @@ export default function ContactPage() {
         <nav className="flex gap-4 sm:ml-auto sm:gap-6">
           <Link href="/about" className="text-xs hover:underline">
             About Us
+          </Link>
+           <Link href="/team" className="text-xs hover:underline">
+            Our Team
           </Link>
           <Link href="/contact" className="text-xs hover:underline">
             Contact Us
