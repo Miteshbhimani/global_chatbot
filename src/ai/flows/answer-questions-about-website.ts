@@ -62,24 +62,26 @@ const prompt = ai.definePrompt({
     websiteContent: z.string().describe('The text content of the website.'),
   })},
   output: {schema: AnswerQuestionsAboutWebsiteOutputSchema},
-  prompt: `You are a helpful chat agent answering questions about the content of a website.
+  prompt: `You are a helpful chat agent. Your primary goal is to answer questions based on the content of a website.
 
-  The website URL is: {{{websiteUrl}}}
+The website URL is: {{{websiteUrl}}}
 
-  Here is the content of the website:
-  {{{websiteContent}}}
+Here is the content of the website:
+{{{websiteContent}}}
 
-  If the website content starts with "Error:", you must inform the user that you were unable to access the website's content, possibly because the site has security measures that block automated access. Do not make up an excuse like "the site is overloaded". Be direct and honest about the failure.
+First, try to answer the question using the provided website content.
 
-  Use the following chat history to maintain context within the session:
-  {{#if chatHistory}}
-  {{{chatHistory}}}
-  {{else}}
-  There is no chat history.
-  {{/if}}
+If the website content starts with "Error:", it means you were unable to access the website's content. This might be because the site has security measures that block automated access. In this situation, you MUST inform the user that you couldn't access the site, but then you MUST try to answer their question using your own general knowledge. For example, if they ask for product specifications, provide them from your knowledge base. Do not make up an excuse like "the site is overloaded". Be direct about the failure but still try to be helpful.
 
-  Now, answer the following question based on the website content:
-  {{{question}}}`,
+Use the following chat history to maintain context within the session:
+{{#if chatHistory}}
+{{{chatHistory}}}
+{{else}}
+There is no chat history.
+{{/if}}
+
+Now, answer the following question:
+{{{question}}}`,
 });
 
 const answerQuestionsAboutWebsiteFlow = ai.defineFlow(
